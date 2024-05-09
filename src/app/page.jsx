@@ -9,7 +9,8 @@ const Home = () => {
   const [showUpdateBox, setShowUpdateBox] = useState(false);
   const [showDeleteBox, setShowDeleteBox] = useState(false);
   const [notes, setNotes] = useState([]);
-
+  const [id, setId] = useState(null);
+  
   useEffect(() => {
     const fetchNotes = async () => {
       try {
@@ -45,22 +46,39 @@ const Home = () => {
     }
   };
  
-  const handleUpdate = async (note, event) => {
+  const updateNote = (note, noteID) => {
     setShowUpdateBox(true);
+    setClearNotes(note);
+    setId(noteID);
+  };
+
+  const handleUpdate = async () => {
     try {
-      setClearNotes(note);
-      event.stopPropagation();
+      await axios.put(`/api/update?id=${id}`, { note: clearNotes });
+      setClearNotes("");
+      const res = await axios.get('/api/');
+      setNotes(res.data.data);
+      setShowUpdateBox(false);
     } catch (error) {
       console.log(error.message);
     }
   };
-  
-  const handleDelete = async (id, event) => {
+
+  const deleteNote = (noteID) => {
+    setShowDeleteBox(true);
+    setId(noteID);
+  };
+
+  const handleDelete = async () => {
     try {
+      await axios.delete(`/api/delete?id=${id}`);
+      const res = await axios.get('/api/');
+      setNotes(res.data.data);
+      setShowDeleteBox(false);
     } catch (error) {
       console.log(error.message);
     }
-  };
+  }
 
   return (
     <div className='bg-white min-h-screen'>
@@ -83,8 +101,8 @@ const Home = () => {
                 <div className='bg-[#fefefe] rounded-sm p-3 flex flex-col gap-3'>
                   <p className="text-blue-500">{v.note}</p>
                   <div className='justify-end flex gap-2'>
-                    <div onClick={() => setShowDeleteBox(true)} className="bg-red-500 rounded-md p-2 cursor-pointer w-max text-white"><FiTrash2 /></div>
-                    <div onClick={() => handleUpdate(v.note, v._id)} className="bg-blue-500 rounded-md p-2 cursor-pointer w-max text-white"><LuPencil /></div>
+                    <div onClick={() => deleteNote(v._id)} className="bg-red-500 rounded-md p-2 cursor-pointer w-max text-white"><FiTrash2 /></div>
+                    <div onClick={() => updateNote(v.note, v._id)} className="bg-blue-500 rounded-md p-2 cursor-pointer w-max text-white"><LuPencil /></div>
                   </div>
                 </div>
               </div>
@@ -98,16 +116,16 @@ const Home = () => {
         <div className="text-blue-500 text-2xl uppercase">Edit the note</div>
           <p className="text-yellow-500 text-lg mt-3">NOTE: This action is irreversible. Notes, once updated, can not be trailed back to previous versions.</p>
 
-          <textarea className='p-3 w-full min-h-48 text-blue-500 mx-auto text-xl font-semibold rounded-md border border-blue-700 mt-7 outline-none' value={clearNotes} name="updateNote" id="update note"></textarea>
+          <textarea className='p-3 w-full min-h-48 text-blue-500 mx-auto text-xl font-semibold rounded-md border border-blue-700 mt-7 outline-none' onChange={(event) => setClearNotes(event.target.value)} value={clearNotes} name="updateNote" id="update note"></textarea>
 
           <div className="flex justify-end gap-3 mt-5">
             <button onClick={() => setShowUpdateBox(false)} className='bg-white border border-blue-700 text-blue-700 p-3 uppercase text-sm rounded-md min-w-32'>Cancel</button>
-            <button className='bg-blue-700 text-white p-3 uppercase text-sm rounded-md min-w-32'>Update</button>
+            <button className='bg-blue-700 text-white p-3 uppercase text-sm rounded-md min-w-32' onClick={() => handleUpdate()}>Update</button>
           </div>
         </div>
       </div>
       
-      <div onClick={() => setShowDeleteBox(false)} style={{ display: showDeleteBox ? 'block' : 'none' }} className="absolute w-screen h-full inset-0 bg-gray-700 bg-opacity-10 backdrop-filter backdrop-blur-md z-30 py-56">
+      <div onClick={() => setShowDeleteBox(false)} style={{ display: showDeleteBox ? 'block' : 'none' }} className="fixed w-screen h-screen inset-0 bg-gray-700 bg-opacity-10 backdrop-filter backdrop-blur-md z-30 py-56">
         <div onClick={(event) => event.stopPropagation()} className="max-w-[1000px] h-max w-full bg-white mx-auto rounded-lg shadow-2xl p-7">
           <div className="text-blue-500 text-2xl uppercase">Are you sure to delete this note?</div>
           <p className="text-red-500 text-lg mt-3">NOTE: This action is irreversible. Deleted notes can not be recovered.</p>

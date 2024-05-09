@@ -4,7 +4,6 @@ import dbConnect from "@/config/dbConnect";
 async function createNote (req, res) {
     await dbConnect();
 
-    delete require.cache[require.resolve("@/models/NotesModel")];
     const notesModel = require("@/models/NotesModel").default;
 
     try {
